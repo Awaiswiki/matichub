@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polygon Investment DApp</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.5.0/dist/ethers.min.js"></script>
+</head>
+<body>
+    <h1>Polygon Investment DApp</h1>
+
+    <div>
+        <label for="depositAmount">Deposit Amount (MATIC):</label>
+        <input type="number" id="depositAmount" step="0.1" placeholder="Enter amount">
+        <button onclick="deposit()">Deposit</button>
+    </div>
+
+    <div>
+        <label for="withdrawAmount">Withdraw Amount (MATIC):</label>
+        <input type="number" id="withdrawAmount" step="0.1" placeholder="Enter amount">
+        <button onclick="withdraw()">Withdraw</button>
+    </div>
+
+    <div>
+        <button onclick="getBalance()">Check Contract Balance</button>
+        <p id="contractBalance"></p>
+    </div>
+
+    <script>
+        // Define your contract ABI and address
+        const contractAddress = '0x95bAcDfEfB2a8528a82c2226724608F646B82AFe';
+        const abi = [
+            // [
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [],
+		"name": "REFERRAL_REWARD",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "balances",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "deposit",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getBalance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "referrer",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_referrer",
+				"type": "address"
+			}
+		],
+		"name": "setReferrer",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "totalReferrals",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "withdraw",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+]
+        ];
+
+        // Connect to the Ethereum network using ethers.js
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        const contract = new ethers.Contract(contractAddress, abi, signer);
+
+        // Function to deposit MATIC tokens
+        async function deposit() {
+            const depositAmount = document.getElementById('depositAmount').value;
+
+            try {
+                // Convert MATIC to wei (1 MATIC = 10^18 wei)
+                const amountInWei = ethers.utils.parseUnits(depositAmount.toString(), 'ether');
+
+                // Call the contract's deposit function
+                const tx = await contract.deposit({ value: amountInWei });
+                await tx.wait();
+
+                alert('Deposit successful!');
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to deposit. Check the console for details.');
+            }
+        }
+
+        // Function to withdraw MATIC tokens
+        async function withdraw() {
+            const withdrawAmount = document.getElementById('withdrawAmount').value;
+
+            try {
+                // Convert MATIC to wei (1 MATIC = 10^18 wei)
+                const amountInWei = ethers.utils.parseUnits(withdrawAmount.toString(), 'ether');
+
+                // Call the contract's withdraw function
+                const tx = await contract.withdraw(amountInWei);
+                await tx.wait();
+
+                alert('Withdrawal successful!');
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to withdraw. Check the console for details.');
+            }
+        }
+
+        // Function to get contract balance
+        async function getBalance() {
+            try {
+                const balance = await provider.getBalance(contractAddress);
+                const balanceInEth = ethers.utils.formatEther(balance);
+                document.getElementById('contractBalance').innerText = `Contract Balance: ${balanceInEth} MATIC`;
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to fetch contract balance. Check the console for details.');
+            }
+        }
+
+        // On page load, check if MetaMask is installed and connected
+        window.onload = async () => {
+            // Modern dapp browsers...
+            if (window.ethereum) {
+                try {
+                    // Request account access if needed
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                } catch (error) {
+                    console.error('User denied account access:', error);
+                    alert('Please connect to MetaMask.');
+                }
+            } else {
+                alert('Please install MetaMask extension to use this DApp.');
+            }
+        };
+    </script>
+</body>
+</html>
